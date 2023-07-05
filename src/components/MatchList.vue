@@ -562,10 +562,21 @@ const findPlayer = (spId) => {
   })
 
   if (index !== -1) {
-    if (allPlayers.value[index].name.split(' ')[0] === '비니시우스') {
-      return allPlayers.value[index].name.split(' ')[0]
+    // if (allPlayers.value[index].name.split(' ')[0] === '비니시우스') {
+    //   return allPlayers.value[index].name.split(' ')[0]
+    // } else {
+    //   return allPlayers.value[index].name.split(' ')[1]
+    // }
+    const playerName = allPlayers.value[index].name
+    if (playerName.includes(' ')) {
+      const splittedName = playerName.split(' ')
+      if (allPlayers.value[index].name.split(' ')[0] === '비니시우스') {
+        return allPlayers.value[index].name.split(' ')[0]
+      } else {
+        return splittedName.slice(1).join(' ')
+      }
     } else {
-      return allPlayers.value[index].name.split(' ')[1]
+      return playerName
     }
   }
 }
@@ -634,7 +645,7 @@ const submitButton = () => {
             //             </div>`
           }
 
-          console.log(returnHomePlayers[7])
+          console.log(returnHomePlayers[3])
           console.log(returnAwayPlayers[2])
         }
 
