@@ -28,7 +28,7 @@ export default createStore({
 
       [
         { key: '0', value: '' },
-        { key: 'empty1', value: '' },
+        { key: '1', value: '' },
         { key: '5', value: '' },
         { key: '10', value: '' },
         { key: '14', value: '' },

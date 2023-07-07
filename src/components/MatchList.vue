@@ -42,7 +42,33 @@
                   <div class="playersBoard" id="home">
                     <div class="rightPlayers" v-for="rows in playerRows" :key="rows">
                       <div class="playersCard" v-for="players in rows" :key="players">
-                        <div class="playerImgDiv" v-if="players.value !== ''">
+                        <div class="playerImgDiv active" v-if="players.value !== ''">
+                          <div :class="'score ' + players.ratingColor">{{ players.spRating }}</div>
+                          <img
+                            :src="'https://fo4.dn.nexoncdn.co.kr/live/externalAssets/common/playersAction/p' + players.value + '.png'"
+                            :alt="findPlayer(players.value)"
+                            class="playerImg"
+                            v-if="players.key !== '0'"
+                          />
+                          <img
+                            :src="'https://fo4.dn.nexoncdn.co.kr/live/externalAssets/common/players/p' + players.value.toString().slice(-6) + '.png'"
+                            :alt="findPlayer(players.value)"
+                            class="playerImg"
+                            v-else
+                          />
+                        </div>
+                        <div class="css-18wvhjm active" v-if="players.value !== ''">
+                          <div color="#212121" class="playerPosition" :id="allPosition[players.key]">{{ allPosition[players.key] }}</div>
+                          <div color="#FFFFFF" class="playerName">{{ findPlayer(players.value) }}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="playersBoard" id="away">
+                    <div class="rightPlayers" v-for="rows in awayPlayerRows" :key="rows">
+                      <div class="playersCard" v-for="players in rows" :key="players">
+                        <div class="playerImgDiv active" v-if="players.value !== ''">
+                          <div :class="'score ' + players.ratingColor">{{ players.spRating }}</div>
                           <img
                             :src="'https://fo4.dn.nexoncdn.co.kr/live/externalAssets/common/playersAction/p' + players.value + '.png'"
                             alt="벤제마"
@@ -56,7 +82,7 @@
                             v-else
                           />
                         </div>
-                        <div class="css-18wvhjm" v-if="players.value !== ''">
+                        <div class="css-18wvhjm active" v-if="players.value !== ''">
                           <div color="#212121" class="playerPosition" :id="allPosition[players.key]">{{ allPosition[players.key] }}</div>
                           <div color="#FFFFFF" class="playerName">{{ findPlayer(players.value) }}</div>
                         </div>
@@ -86,7 +112,8 @@ const allPlayers = ref([])
 const allPosition = ref({})
 const store = useStore()
 const positions = computed(() => store.state.positions)
-const playerRows = reactive(computed(() => store.state.playerRows).value)
+const playerRows = reactive(JSON.parse(JSON.stringify(store.state.playerRows)))
+const awayPlayerRows = reactive(JSON.parse(JSON.stringify(store.state.playerRows)))
 
 onMounted(async () => {
   const positionArray = positions.value.split(',')
@@ -133,6 +160,8 @@ const findPlayer = (spId) => {
       const splittedName = playerName.split(' ')
       if (allPlayers.value[index].name.split(' ')[0] === '비니시우스') {
         return allPlayers.value[index].name.split(' ')[0]
+      } else if (playerName.includes('-')) {
+        return allPlayers.value[index].name.split('-')[1]
       } else {
         return splittedName.slice(1).join(' ')
       }
@@ -178,18 +207,80 @@ const submitButton = () => {
             }
           }
 
+          let maxSpRating1 = -Infinity
+          let maxSpId1 = null
+
           for (let i = matchInfoHome.length - 1; i >= 0; i--) {
-            returnHomePlayers[matchInfoHome[i].spPosition] = matchInfoHome[i].spId
-            returnAwayPlayers[matchInfoAway[i].spPosition] = matchInfoAway[i].spId
+            const item = matchInfoHome[i]
+            const spRating = item.status.spRating
+
+            if (spRating > maxSpRating1) {
+              maxSpRating1 = spRating
+              maxSpId1 = item.spId
+            }
+            returnHomePlayers[matchInfoHome[i].spPosition] = matchInfoHome[i]
           }
+
+          let maxSpRating2 = -Infinity
+          let maxSpId2 = null
+
+          for (let i = matchInfoAway.length - 1; i >= 0; i--) {
+            const item = matchInfoAway[i]
+            const spRating = item.status.spRating
+
+            if (spRating > maxSpRating1) {
+              maxSpRating2 = spRating
+              maxSpId2 = item.spId
+            }
+            returnAwayPlayers[matchInfoAway[i].spPosition] = matchInfoAway[i]
+          }
+
+          const maxSpId = maxSpRating1 > maxSpRating2 ? maxSpId1 : maxSpId2
 
           for (const groupItem of playerRows) {
             for (const item of groupItem) {
               if (item.key in returnHomePlayers) {
-                item.value = returnHomePlayers[item.key]
+                item.value = returnHomePlayers[item.key].spId
+                item.spRating = returnHomePlayers[item.key].status.spRating.toFixed(1)
+                if (returnHomePlayers[item.key].status.spRating < 7.0) {
+                  item.ratingColor = 'rateLow'
+                } else if (returnHomePlayers[item.key].status.spRating < 8.0) {
+                  item.ratingColor = 'rateMid'
+                } else if (returnHomePlayers[item.key].status.spRating > 8.0) {
+                  item.ratingColor = 'rateHigh'
+                }
+                if (returnHomePlayers[item.key].spId === maxSpId) {
+                  item.ratingColor = 'bestPlayer'
+                  item.spRating = item.spRating + '⭐️'
+                }
               }
             }
           }
+
+          for (const groupItem of awayPlayerRows) {
+            for (const item of groupItem) {
+              if (item.key in returnAwayPlayers) {
+                item.value = returnAwayPlayers[item.key].spId
+                item.spRating = returnAwayPlayers[item.key].status.spRating.toFixed(1)
+                if (returnAwayPlayers[item.key].status.spRating < 7.0) {
+                  item.ratingColor = 'rateLow'
+                } else if (returnAwayPlayers[item.key].status.spRating < 8.0) {
+                  item.ratingColor = 'rateMid'
+                } else if (returnAwayPlayers[item.key].status.spRating > 8.0) {
+                  item.ratingColor = 'rateHigh'
+                }
+                if (returnAwayPlayers[item.key].spId === maxSpId) {
+                  item.ratingColor = 'bestPlayer'
+                  item.spRating = item.spRating + '⭐️'
+                }
+              }
+            }
+          }
+
+          console.log('matchInfoHome', matchInfoHome)
+          console.log('matchInfoAway', matchInfoAway)
+          console.log('bestPlayer', maxSpId)
+          console.log('bestPlayer', maxSpId)
         }
 
         //경기 기록 상세 조회 실패 콜백
