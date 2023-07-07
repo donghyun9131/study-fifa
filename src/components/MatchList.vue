@@ -40,7 +40,7 @@
               <b-card>
                 <div class="background">
                   <div class="playersBoard" id="home">
-                    <div class="rightPlayers" v-for="rows in playerRows" :key="rows">
+                    <div class="rightPlayers" v-for="rows in homePlayerRows" :key="rows">
                       <div class="playersCard" v-for="players in rows" :key="players">
                         <div class="playerImgDiv active" v-if="players.value !== ''">
                           <div :class="'score ' + players.ratingColor">{{ players.spRating }}</div>
@@ -105,15 +105,16 @@ import { reactive, onMounted, ref, computed } from 'vue'
 import { useStore } from 'vuex'
 
 const visible = reactive({ 'accordion-1': false, 'accordion-2': false, 'accordion-3': false })
-const resultData = reactive({ nickname: '', response: [], userNotFound: false })
-const returnHomePlayers = reactive({})
-const returnAwayPlayers = reactive({})
+let resultData = reactive({ nickname: '', response: [], userNotFound: false })
+let returnHomePlayers = reactive({})
+let returnAwayPlayers = reactive({})
 const allPlayers = ref([])
 const allPosition = ref({})
 const store = useStore()
 const positions = computed(() => store.state.positions)
-const playerRows = reactive(JSON.parse(JSON.stringify(store.state.playerRows)))
-const awayPlayerRows = reactive(JSON.parse(JSON.stringify(store.state.playerRows)))
+const playerRows = store.state.playerRows
+let homePlayerRows = reactive(JSON.parse(JSON.stringify(playerRows)))
+let awayPlayerRows = reactive(JSON.parse(JSON.stringify(playerRows)))
 
 onMounted(async () => {
   const positionArray = positions.value.split(',')
@@ -172,8 +173,14 @@ const findPlayer = (spId) => {
 }
 
 const submitButton = () => {
-  resultData.response.splice(0) //API result 초기화
-  resultData.userNotFound = false //API result 초기화
+  //Data 초기화
+  resultData.response.splice(0)
+  resultData.userNotFound = false
+  homePlayerRows = JSON.parse(JSON.stringify(playerRows))
+  awayPlayerRows = JSON.parse(JSON.stringify(playerRows))
+  returnHomePlayers = {}
+  returnAwayPlayers = {}
+
   const headers = {
     'Content-Type': 'application/json',
     Authorization:
@@ -237,7 +244,7 @@ const submitButton = () => {
 
           const maxSpId = maxSpRating1 > maxSpRating2 ? maxSpId1 : maxSpId2
 
-          for (const groupItem of playerRows) {
+          for (const groupItem of homePlayerRows) {
             for (const item of groupItem) {
               if (item.key in returnHomePlayers) {
                 item.value = returnHomePlayers[item.key].spId
@@ -276,11 +283,8 @@ const submitButton = () => {
               }
             }
           }
-
-          console.log('matchInfoHome', matchInfoHome)
-          console.log('matchInfoAway', matchInfoAway)
-          console.log('bestPlayer', maxSpId)
-          console.log('bestPlayer', maxSpId)
+          console.log('homePlayerRows', homePlayerRows)
+          console.log('awaypalyerRows', awayPlayerRows)
         }
 
         //경기 기록 상세 조회 실패 콜백
