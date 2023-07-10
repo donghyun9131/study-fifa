@@ -71,6 +71,7 @@ a {
   color: rgb(254, 255, 251);
   background: rgb(117, 117, 115);
   border-radius: 0.4rem;
+  letter-spacing: 0px;
 }
 .playerWrab {
   width: 50%;

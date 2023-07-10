@@ -40,7 +40,7 @@
               <b-card>
                 <div class="background">
                   <div class="playersBoard" id="home">
-                    <div class="rightPlayers" v-for="rows in homePlayerRows" :key="rows">
+                    <div class="rightPlayers" v-for="rows in result.homePlayerRows" :key="rows">
                       <div class="playersCard" v-for="players in rows" :key="players">
                         <div class="playerImgDiv active" v-if="players.value !== ''">
                           <div :class="'score ' + players.ratingColor">{{ players.spRating }}</div>
@@ -51,7 +51,7 @@
                             v-if="players.key !== '0'"
                           />
                           <img
-                            :src="'https://fo4.dn.nexoncdn.co.kr/live/externalAssets/common/players/p' + players.value.toString().slice(-6) + '.png'"
+                            :src="'https://fo4.dn.nexoncdn.co.kr/live/externalAssets/common/players/p' + Number(players.value.toString().slice(-6)) + '.png'"
                             :alt="findPlayer(players.value)"
                             class="playerImg"
                             v-else
@@ -65,7 +65,7 @@
                     </div>
                   </div>
                   <div class="playersBoard" id="away">
-                    <div class="rightPlayers" v-for="rows in awayPlayerRows" :key="rows">
+                    <div class="rightPlayers" v-for="rows in result.awayPlayerRows" :key="rows">
                       <div class="playersCard" v-for="players in rows" :key="players">
                         <div class="playerImgDiv active" v-if="players.value !== ''">
                           <div :class="'score ' + players.ratingColor">{{ players.spRating }}</div>
@@ -76,7 +76,7 @@
                             v-if="players.key !== '0'"
                           />
                           <img
-                            :src="'https://fo4.dn.nexoncdn.co.kr/live/externalAssets/common/players/p' + players.value.toString().slice(-6) + '.png'"
+                            :src="'https://fo4.dn.nexoncdn.co.kr/live/externalAssets/common/players/p' + Number(players.value.toString().slice(-6)) + '.png'"
                             alt="벤제마"
                             class="playerImg"
                             v-else
@@ -104,17 +104,13 @@ import axios from 'axios'
 import { reactive, onMounted, ref, computed } from 'vue'
 import { useStore } from 'vuex'
 
-const visible = reactive({ 'accordion-1': false, 'accordion-2': false, 'accordion-3': false })
+const visible = reactive({})
 let resultData = reactive({ nickname: '', response: [], userNotFound: false })
-let returnHomePlayers = reactive({})
-let returnAwayPlayers = reactive({})
 const allPlayers = ref([])
 const allPosition = ref({})
 const store = useStore()
 const positions = computed(() => store.state.positions)
 const playerRows = store.state.playerRows
-let homePlayerRows = reactive(JSON.parse(JSON.stringify(playerRows)))
-let awayPlayerRows = reactive(JSON.parse(JSON.stringify(playerRows)))
 
 onMounted(async () => {
   const positionArray = positions.value.split(',')
@@ -176,10 +172,6 @@ const submitButton = () => {
   //Data 초기화
   resultData.response.splice(0)
   resultData.userNotFound = false
-  homePlayerRows = JSON.parse(JSON.stringify(playerRows))
-  awayPlayerRows = JSON.parse(JSON.stringify(playerRows))
-  returnHomePlayers = {}
-  returnAwayPlayers = {}
 
   const headers = {
     'Content-Type': 'application/json',
@@ -190,122 +182,127 @@ const submitButton = () => {
   const findUserApiUrl = `https://api.nexon.co.kr/fifaonline4/v1.0/users?nickname=${resultData.nickname}`
 
   //닉네임으로 유저 조회 성공 콜백
-  const findUserApiCallback = (apiResult) => {
+  const findUserApiCallback = async (apiResult) => {
     //찾은 유저의 경기 기록 조회 url
-    const urls = `https://api.nexon.co.kr/fifaonline4/v1.0/users/${apiResult.data.accessId}/matches?matchtype=50&offset=0&limit=1`
-
-    //경기 기록 조회 성공 콜백
-    const matchInfoCallback = (apiResult) => {
-      apiResult.data.forEach((element) => {
-        const urls2 = `https://api.nexon.co.kr/fifaonline4/v1.0/matches/${element}` // 매치 상세조회 url
-
-        //경기 기록 상세 조회 콜백
-        const matchDetailCallback = (apiResult) => {
-          resultData.response.push(apiResult.data)
-          let matchInfoHome = apiResult.data.matchInfo[0].player
-          let matchInfoAway = apiResult.data.matchInfo[1].player
-
-          for (let i = matchInfoHome.length - 1; i >= 0; i--) {
-            if (matchInfoHome[i].spPosition === 28) {
-              matchInfoHome.splice(i, 1)
-            }
-            if (matchInfoAway[i].spPosition === 28) {
-              matchInfoAway.splice(i, 1)
-            }
-          }
-
-          let maxSpRating1 = -Infinity
-          let maxSpId1 = null
-
-          for (let i = matchInfoHome.length - 1; i >= 0; i--) {
-            const item = matchInfoHome[i]
-            const spRating = item.status.spRating
-
-            if (spRating > maxSpRating1) {
-              maxSpRating1 = spRating
-              maxSpId1 = item.spId
-            }
-            returnHomePlayers[matchInfoHome[i].spPosition] = matchInfoHome[i]
-          }
-
-          let maxSpRating2 = -Infinity
-          let maxSpId2 = null
-
-          for (let i = matchInfoAway.length - 1; i >= 0; i--) {
-            const item = matchInfoAway[i]
-            const spRating = item.status.spRating
-
-            if (spRating > maxSpRating1) {
-              maxSpRating2 = spRating
-              maxSpId2 = item.spId
-            }
-            returnAwayPlayers[matchInfoAway[i].spPosition] = matchInfoAway[i]
-          }
-
-          const maxSpId = maxSpRating1 > maxSpRating2 ? maxSpId1 : maxSpId2
-
-          for (const groupItem of homePlayerRows) {
-            for (const item of groupItem) {
-              if (item.key in returnHomePlayers) {
-                item.value = returnHomePlayers[item.key].spId
-                item.spRating = returnHomePlayers[item.key].status.spRating.toFixed(1)
-                if (returnHomePlayers[item.key].status.spRating < 7.0) {
-                  item.ratingColor = 'rateLow'
-                } else if (returnHomePlayers[item.key].status.spRating < 8.0) {
-                  item.ratingColor = 'rateMid'
-                } else if (returnHomePlayers[item.key].status.spRating > 8.0) {
-                  item.ratingColor = 'rateHigh'
-                }
-                if (returnHomePlayers[item.key].spId === maxSpId) {
-                  item.ratingColor = 'bestPlayer'
-                  item.spRating = item.spRating + '⭐️'
-                }
-              }
-            }
-          }
-
-          for (const groupItem of awayPlayerRows) {
-            for (const item of groupItem) {
-              if (item.key in returnAwayPlayers) {
-                item.value = returnAwayPlayers[item.key].spId
-                item.spRating = returnAwayPlayers[item.key].status.spRating.toFixed(1)
-                if (returnAwayPlayers[item.key].status.spRating < 7.0) {
-                  item.ratingColor = 'rateLow'
-                } else if (returnAwayPlayers[item.key].status.spRating < 8.0) {
-                  item.ratingColor = 'rateMid'
-                } else if (returnAwayPlayers[item.key].status.spRating > 8.0) {
-                  item.ratingColor = 'rateHigh'
-                }
-                if (returnAwayPlayers[item.key].spId === maxSpId) {
-                  item.ratingColor = 'bestPlayer'
-                  item.spRating = item.spRating + '⭐️'
-                }
-              }
-            }
-          }
-          console.log('homePlayerRows', homePlayerRows)
-          console.log('awaypalyerRows', awayPlayerRows)
-        }
-
-        //경기 기록 상세 조회 실패 콜백
-        const matchDetailFailCallback = (apiErrorResult) => {
-          resultData.userNotFound = true
-          resultData.response.push(apiErrorResult.message)
-        }
-
-        //경기 기록 상세 조회 API
-        axiosConnet(urls2, headers, matchDetailCallback, matchDetailFailCallback)
+    const urls = `https://api.nexon.co.kr/fifaonline4/v1.0/users/${apiResult.data.accessId}/matches?matchtype=50&offset=0&limit=4`
+    await axios
+      .get(urls, {
+        headers: headers,
       })
-    }
+      .then(async (res) => {
+        for (const [index, element] of res.data.entries()) {
+          let visibleObjKey = 'accordion-' + (index + 1)
+          visible[visibleObjKey] = false
+          const urls2 = `https://api.nexon.co.kr/fifaonline4/v1.0/matches/${element}` // 매치 상세조회 url
+          await axios
+            .get(urls2, {
+              headers: headers,
+            })
+            .then((detail) => {
+              resultData.response.push(detail.data)
+              let homePlayerRows = JSON.parse(JSON.stringify(playerRows))
+              let awayPlayerRows = JSON.parse(JSON.stringify(playerRows))
+              let returnHomePlayers = {}
+              let returnAwayPlayers = {}
+              let matchInfoHome = detail.data.matchInfo[0].player
+              let matchInfoAway = detail.data.matchInfo[1].player
 
-    //경기 기록 조회 실패 콜백
-    const mathInfoFailCallback = (apiErrorResult) => {
-      resultData.userNotFound = true
-      resultData.response.push(apiErrorResult.message)
-    }
+              for (let i = matchInfoHome.length - 1; i >= 0; i--) {
+                if (matchInfoHome[i].spPosition === 28) {
+                  matchInfoHome.splice(i, 1)
+                }
+                if (matchInfoAway[i].spPosition === 28) {
+                  matchInfoAway.splice(i, 1)
+                }
+              }
 
-    //유저의 경기 기록 조회 API
-    axiosConnet(urls, headers, matchInfoCallback, mathInfoFailCallback)
+              let maxSpRating1 = -Infinity
+              let maxSpId1 = null
+
+              for (let i = matchInfoHome.length - 1; i >= 0; i--) {
+                const item = matchInfoHome[i]
+                const spRating = item.status.spRating
+
+                if (spRating > maxSpRating1) {
+                  maxSpRating1 = spRating
+                  maxSpId1 = item.spId
+                }
+                returnHomePlayers[matchInfoHome[i].spPosition] = matchInfoHome[i]
+              }
+
+              let maxSpRating2 = -Infinity
+              let maxSpId2 = null
+
+              for (let i = matchInfoAway.length - 1; i >= 0; i--) {
+                const item = matchInfoAway[i]
+                const spRating = item.status.spRating
+
+                if (spRating > maxSpRating1) {
+                  maxSpRating2 = spRating
+                  maxSpId2 = item.spId
+                }
+                returnAwayPlayers[matchInfoAway[i].spPosition] = matchInfoAway[i]
+              }
+
+              const maxSpId = maxSpRating1 > maxSpRating2 ? maxSpId1 : maxSpId2
+
+              for (const groupItem of homePlayerRows) {
+                for (const item of groupItem) {
+                  if (item.key in returnHomePlayers) {
+                    item.value = returnHomePlayers[item.key].spId
+                    item.spRating = returnHomePlayers[item.key].status.spRating.toFixed(1)
+                    if (returnHomePlayers[item.key].status.spRating < 7.0) {
+                      item.ratingColor = 'rateLow'
+                    } else if (returnHomePlayers[item.key].status.spRating < 8.0) {
+                      item.ratingColor = 'rateMid'
+                    } else if (returnHomePlayers[item.key].status.spRating > 8.0) {
+                      item.ratingColor = 'rateHigh'
+                    }
+                    if (returnHomePlayers[item.key].spId === maxSpId) {
+                      item.ratingColor = 'bestPlayer'
+                      item.spRating = item.spRating + '⭐️'
+                    }
+                  }
+                }
+              }
+
+              for (const groupItem of awayPlayerRows) {
+                for (const item of groupItem) {
+                  if (item.key in returnAwayPlayers) {
+                    item.value = returnAwayPlayers[item.key].spId
+                    item.spRating = returnAwayPlayers[item.key].status.spRating.toFixed(1)
+                    if (returnAwayPlayers[item.key].status.spRating < 7.0) {
+                      item.ratingColor = 'rateLow'
+                    } else if (returnAwayPlayers[item.key].status.spRating < 8.0) {
+                      item.ratingColor = 'rateMid'
+                    } else if (returnAwayPlayers[item.key].status.spRating > 8.0) {
+                      item.ratingColor = 'rateHigh'
+                    }
+                    if (returnAwayPlayers[item.key].spId === maxSpId) {
+                      item.ratingColor = 'bestPlayer'
+                      item.spRating = item.spRating + '⭐️'
+                    }
+                  }
+                }
+              }
+              resultData.response[index].homePlayerRows = homePlayerRows
+              resultData.response[index].awayPlayerRows = awayPlayerRows
+              console.log(resultData.response)
+            })
+            .catch((error) => {
+              if (error.response.status === 404) {
+                resultData.userNotFound = true
+                resultData.response.push(error.message)
+              }
+            })
+        }
+      })
+      .catch((error) => {
+        if (error.response.status === 404) {
+          resultData.userNotFound = true
+          resultData.response.push(error.message)
+        }
+      })
   }
 
   //닉네임으로 유저 조회 실패 콜백
@@ -318,7 +315,7 @@ const submitButton = () => {
   axiosConnet(findUserApiUrl, headers, findUserApiCallback, findUserApiFailCallback)
 }
 
-const axiosConnet = (url, header, successCallback, failCallback) => {
+const axiosConnet = async (url, header, successCallback, failCallback) => {
   axios
     .get(url, {
       headers: header,
