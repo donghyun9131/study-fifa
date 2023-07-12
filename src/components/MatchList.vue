@@ -1,116 +1,122 @@
 <template>
-  <b-container fluid="sm">
-    <div>
-      <b-row class="justify-content-md-center p-3">
-        <b-col cols="12" md="auto">
-          <b-input-group size="lg" class="mb-5">
-            <b-form-input v-model="resultData.nickname" placeholder="닉네임 입력.."></b-form-input>
-            <b-input-group-append>
-              <b-button size="lg" text="Button" variant="success" @click="submitButton">검색</b-button>
-            </b-input-group-append>
-          </b-input-group>
-        </b-col>
-      </b-row>
+  <div style="max-width: 1400px; margin: 0px auto">
+    <div class="hedaerTitle">
+      <div class="text-box">
+        <div class="text-wrap">
+          <div class="heart"></div>
+          <a class="logoText" href="/"><h1>M.O.M</h1></a>
+          <h4>Man Of the Match</h4>
+        </div>
+      </div>
+      <div>
+        <b-row class="justify-content-md-center p-5">
+          <b-col cols="12" md="auto">
+            <b-input-group size="lg" class="mb-1">
+              <b-form-input v-model="totalData.nickname" placeholder="구단주명"></b-form-input>
+              <b-input-group-append>
+                <b-button size="lg" text="Button" variant="primary" @click="submitButton">검색</b-button>
+              </b-input-group-append>
+            </b-input-group>
+          </b-col>
+        </b-row>
+      </div>
     </div>
-    <div v-if="resultData.userNotFound">{{ resultData.response[0] }}</div>
+    <loading-overlay :active="loading"></loading-overlay>
+    <div v-if="resultData.response.length === 0"></div>
     <div v-else>
+      <!-- userprofile component -->
+      <UserProfile :userProfile="resultData" :findDivision="findDivision" />
+
       <div class="accordion" role="tablist">
-        <b-card
-          no-body
-          class="mb-3"
-          v-for="(result, index) in resultData.response"
-          :key="result.matchId"
-          style="background: rgb(225, 239, 255); border-inline-start: 8px solid rgb(0, 114, 245); border-radius: 30px"
-        >
-          <b-card-header header-tag="header" class="p-1" role="tab" @click="toggleCollapse('accordion-' + (index + 1))" style="border: none">
-            <div style="display: flex; justify-content: space-between; padding: 20px 10px; align-items: center">
-              <div>
-                <div>2023-05-05</div>
-                <div>16:44:32</div>
+        <b-card no-body class="cardTitle mb-2" v-for="(result, index) in resultData.response" :key="result.matchId">
+          <b-card-header
+            header-tag="header"
+            :class="'cardHedaer-' + result.gameResult"
+            role="tab"
+            @click="toggleCollapse('accordion-' + (index + 1))"
+            style="border: none"
+          >
+            <div :class="'test-' + result.matchInfo[0].matchDetail.matchResult">
+              <div style="font-size: 15px; color: white">Home</div>
+              <div style="align-items: center; width: 100%">
+                <div>
+                  <img style="width: 60px; height: 60px" :src="findDivision(resultData.userDivisionInfo[0].division)" />
+                  {{ result.matchInfo[0].nickname }}
+                </div>
               </div>
-              <div>
-                {{ result.matchType === 50 ? '[일반]' : '[친선]' }} {{ result.matchInfo[0].nickname }} ({{ result.matchInfo[0].matchDetail.matchResult }}) VS
-                {{ result.matchInfo[1].nickname }} ({{ result.matchInfo[1].matchDetail.matchResult }})
+            </div>
+            <div class="test">
+              <div class="titleCenter">
+                <div class="titleCenterScore">{{ result.matchInfo[0].shoot.goalTotal }}</div>
               </div>
-              <div></div>
+
+              <div class="titleCenter">
+                <div><img src="../assets/공식경기로고.png" style="width: 120px; height: 100px" /></div>
+              </div>
+
+              <div class="titleCenter">
+                <div class="titleCenterScore">{{ result.matchInfo[1].shoot.goalTotal }}</div>
+              </div>
+            </div>
+            <div :class="'test-' + result.matchInfo[1].matchDetail.matchResult">
+              <div style="font-size: 15px; color: white">Away</div>
+              <div style="align-items: center; width: 100%">
+                <div>
+                  <img style="width: 60px; height: 60px" :src="findDivision(resultData.userDivisionInfo[1].division)" />
+                  {{ result.matchInfo[1].nickname }}
+                </div>
+              </div>
             </div>
           </b-card-header>
           <b-collapse :id="'accordion-' + (index + 1)" accordion="my-accordion" role="tabpanel" :visible="visible['accordion-' + (index + 1)]">
             <b-card-body>
               <b-card>
-                <div class="background">
-                  <div class="playersBoard" id="home">
-                    <div class="rightPlayers" v-for="rows in result.homePlayerRows" :key="rows">
-                      <div class="playersCard" v-for="players in rows" :key="players">
-                        <div class="playerImgDiv active" v-if="players.value !== ''">
-                          <div :class="'score ' + players.ratingColor">{{ players.spRating }}</div>
-                          <img
-                            :src="'https://fo4.dn.nexoncdn.co.kr/live/externalAssets/common/playersAction/p' + players.value + '.png'"
-                            :alt="findPlayer(players.value)"
-                            class="playerImg"
-                            v-if="players.key !== '0'"
-                          />
-                          <img
-                            :src="'https://fo4.dn.nexoncdn.co.kr/live/externalAssets/common/players/p' + Number(players.value.toString().slice(-6)) + '.png'"
-                            :alt="findPlayer(players.value)"
-                            class="playerImg"
-                            v-else
-                          />
-                        </div>
-                        <div class="css-18wvhjm active" v-if="players.value !== ''">
-                          <div color="#212121" class="playerPosition" :id="allPosition[players.key]">{{ allPosition[players.key] }}</div>
-                          <div color="#FFFFFF" class="playerName">{{ findPlayer(players.value) }}</div>
-                        </div>
+                <div>
+                  <div class="background">
+                    <div class="playersBoard" id="home">
+                      <div class="rightPlayers" v-for="rows in result.homePlayerRows" :key="rows">
+                        <PlayersCard :rows="rows" :allPosition="allPosition" :findPlayer="findPlayer" />
                       </div>
                     </div>
-                  </div>
-                  <div class="playersBoard" id="away">
-                    <div class="rightPlayers" v-for="rows in result.awayPlayerRows" :key="rows">
-                      <div class="playersCard" v-for="players in rows" :key="players">
-                        <div class="playerImgDiv active" v-if="players.value !== ''">
-                          <div :class="'score ' + players.ratingColor">{{ players.spRating }}</div>
-                          <img
-                            :src="'https://fo4.dn.nexoncdn.co.kr/live/externalAssets/common/playersAction/p' + players.value + '.png'"
-                            alt="벤제마"
-                            class="playerImg"
-                            v-if="players.key !== '0'"
-                          />
-                          <img
-                            :src="'https://fo4.dn.nexoncdn.co.kr/live/externalAssets/common/players/p' + Number(players.value.toString().slice(-6)) + '.png'"
-                            alt="벤제마"
-                            class="playerImg"
-                            v-else
-                          />
-                        </div>
-                        <div class="css-18wvhjm active" v-if="players.value !== ''">
-                          <div color="#212121" class="playerPosition" :id="allPosition[players.key]">{{ allPosition[players.key] }}</div>
-                          <div color="#FFFFFF" class="playerName">{{ findPlayer(players.value) }}</div>
-                        </div>
+                    <div class="playersBoard" id="away">
+                      <div class="rightPlayers" v-for="rows in result.awayPlayerRows" :key="rows">
+                        <PlayersCard :rows="rows" :allPosition="allPosition" :findPlayer="findPlayer" />
                       </div>
                     </div>
                   </div>
                 </div>
+                <!-- MatchStat -->
+                <MatchStat :resultData="result" />
               </b-card>
             </b-card-body>
           </b-collapse>
         </b-card>
       </div>
     </div>
-  </b-container>
+  </div>
 </template>
 
 <script setup>
 import axios from 'axios'
 import { reactive, onMounted, ref, computed } from 'vue'
 import { useStore } from 'vuex'
+import LoadingOverlay from 'vue-loading-overlay'
+import 'vue-loading-overlay/dist/css/index.css'
+import UserProfile from './matchList/UserProfile.vue'
+import MatchStat from './matchList/MatchStat.vue'
+import PlayersCard from './PlayersCard.vue'
+
+const loading = ref(false)
 
 const visible = reactive({})
-let resultData = reactive({ nickname: '', response: [], userNotFound: false })
+let resultData = reactive({ nickname: '', response: [], userNotFound: false, findUserInfo: {} })
 const allPlayers = ref([])
 const allPosition = ref({})
+const allDivision = ref({})
 const store = useStore()
 const positions = computed(() => store.state.positions)
 const playerRows = store.state.playerRows
+let totalData = { nickname: '', response: [], userNotFound: true, findUserInfo: {} }
 
 onMounted(async () => {
   const positionArray = positions.value.split(',')
@@ -125,6 +131,25 @@ onMounted(async () => {
   }
 
   const urls = 'https://static.api.nexon.co.kr/fifaonline4/latest/spid.json'
+  const divisionUrls = 'https://static.api.nexon.co.kr/fifaonline4/latest/division.json'
+
+  await axios
+    .get(divisionUrls, {
+      headers: headers,
+    })
+    .then((res) => {
+      // for(res.data.value.length)
+      let tempData = res.data
+      for (let i = 0; i < res.data.length; i++) {
+        res.data[i].divisionImg = `https://ssl.nexon.com/s2/game/fo4/obt/rank/large/update_2009/ico_rank${i}.png`
+      }
+      allDivision.value = tempData
+    })
+    .catch((error) => {
+      if (error.response.status === 404) {
+        console.log('실패')
+      }
+    })
 
   await axios
     .get(urls, {
@@ -139,6 +164,10 @@ onMounted(async () => {
       }
     })
 })
+
+const findDivision = (division) => {
+  return allDivision.value.find((item) => item.divisionId === division)?.divisionImg || ''
+}
 
 const toggleCollapse = (propName) => {
   visible[propName] = !visible[propName]
@@ -169,9 +198,7 @@ const findPlayer = (spId) => {
 }
 
 const submitButton = () => {
-  //Data 초기화
-  resultData.response.splice(0)
-  resultData.userNotFound = false
+  loading.value = true
 
   const headers = {
     'Content-Type': 'application/json',
@@ -179,17 +206,36 @@ const submitButton = () => {
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJYLUFwcC1SYXRlLUxpbWl0IjoiNTAwOjEwIiwiYWNjb3VudF9pZCI6IjM4Njg2NzczNyIsImF1dGhfaWQiOiIyIiwiZXhwIjoxNzAzNTY4NTg1LCJpYXQiOjE2ODgwMTY1ODUsIm5iZiI6MTY4ODAxNjU4NSwic2VydmljZV9pZCI6IjQzMDAxMTQ4MSIsInRva2VuX3R5cGUiOiJBY2Nlc3NUb2tlbiJ9.07txWeL2lyLvtYvTcCVpGTRQpD5GZ7I9lQH6nnsXD1g',
   }
   //닉네임으로 유저 조회 url
-  const findUserApiUrl = `https://api.nexon.co.kr/fifaonline4/v1.0/users?nickname=${resultData.nickname}`
+  const findUserApiUrl = `https://api.nexon.co.kr/fifaonline4/v1.0/users?nickname=${totalData.nickname}`
 
   //닉네임으로 유저 조회 성공 콜백
   const findUserApiCallback = async (apiResult) => {
+    totalData.level = apiResult.data.level
+    totalData.nickname = apiResult.data.nickname
     //찾은 유저의 경기 기록 조회 url
-    const urls = `https://api.nexon.co.kr/fifaonline4/v1.0/users/${apiResult.data.accessId}/matches?matchtype=50&offset=0&limit=4`
+    const urls = `https://api.nexon.co.kr/fifaonline4/v1.0/users/${apiResult.data.accessId}/matches?matchtype=50&offset=0&limit=5`
+    const bestDivisionUrls = `https://api.nexon.co.kr/fifaonline4/v1.0/users/${apiResult.data.accessId}/maxdivision`
     await axios
       .get(urls, {
         headers: headers,
       })
       .then(async (res) => {
+        let winCount = 0
+        let winPossession = 0
+        let avgGoal = 0
+        await axios
+          .get(bestDivisionUrls, {
+            headers: headers,
+          })
+          .then((res) => {
+            resultData.userDivisionInfo = res.data
+          })
+          .catch((error) => {
+            if (error.response.status === 404) {
+              console.log('실패')
+            }
+          })
+        totalData.response.splice(0)
         for (const [index, element] of res.data.entries()) {
           let visibleObjKey = 'accordion-' + (index + 1)
           visible[visibleObjKey] = false
@@ -199,7 +245,36 @@ const submitButton = () => {
               headers: headers,
             })
             .then((detail) => {
-              resultData.response.push(detail.data)
+              totalData.response.push(detail.data)
+              for (let i = 0; i < 2; i++) {
+                if (detail.data.matchInfo[i].accessId === apiResult.data.accessId) {
+                  if (detail.data.matchInfo[i].matchDetail.matchResult === '승') {
+                    detail.data.gameResult = 'win'
+                    detail.data.matchInfo[i].matchDetail.matchResult === '승' ? (winCount += 1) : winCount
+                  } else if (detail.data.matchInfo[i].matchDetail.matchResult === '무') {
+                    detail.data.gameResult = 'draw'
+                  } else {
+                    detail.data.gameResult = 'lose'
+                  }
+                  winPossession += detail.data.matchInfo[i].matchDetail.possession
+                  avgGoal += detail.data.matchInfo[i].shoot.goalTotal
+                } else {
+                  const bestDivisionUrls2 = `https://api.nexon.co.kr/fifaonline4/v1.0/users/${detail.data.matchInfo[i].accessId}/maxdivision`
+                  axios
+                    .get(bestDivisionUrls2, {
+                      headers: headers,
+                    })
+                    .then((res) => {
+                      resultData.otherDivisionInfo = res.data
+                    })
+                    .catch((error) => {
+                      if (error.response.status === 404) {
+                        console.log('실패')
+                      }
+                    })
+                }
+              }
+
               let homePlayerRows = JSON.parse(JSON.stringify(playerRows))
               let awayPlayerRows = JSON.parse(JSON.stringify(playerRows))
               let returnHomePlayers = {}
@@ -207,108 +282,122 @@ const submitButton = () => {
               let matchInfoHome = detail.data.matchInfo[0].player
               let matchInfoAway = detail.data.matchInfo[1].player
 
-              for (let i = matchInfoHome.length - 1; i >= 0; i--) {
-                if (matchInfoHome[i].spPosition === 28) {
-                  matchInfoHome.splice(i, 1)
-                }
-                if (matchInfoAway[i].spPosition === 28) {
-                  matchInfoAway.splice(i, 1)
-                }
-              }
-
               let maxSpRating1 = -Infinity
               let maxSpId1 = null
-
-              for (let i = matchInfoHome.length - 1; i >= 0; i--) {
-                const item = matchInfoHome[i]
-                const spRating = item.status.spRating
-
-                if (spRating > maxSpRating1) {
-                  maxSpRating1 = spRating
-                  maxSpId1 = item.spId
-                }
-                returnHomePlayers[matchInfoHome[i].spPosition] = matchInfoHome[i]
-              }
+              let sumHomeSpRating = 0
 
               let maxSpRating2 = -Infinity
               let maxSpId2 = null
+              let sumAwaySpRating = 0
 
-              for (let i = matchInfoAway.length - 1; i >= 0; i--) {
-                const item = matchInfoAway[i]
-                const spRating = item.status.spRating
-
-                if (spRating > maxSpRating1) {
-                  maxSpRating2 = spRating
-                  maxSpId2 = item.spId
+              for (let i = matchInfoHome.length - 1; i >= 0; i--) {
+                //home
+                const homeItem = matchInfoHome[i]
+                const homeSpRating = homeItem.status.spRating
+                sumHomeSpRating += homeSpRating
+                if (matchInfoHome[i].spPosition === 28) {
+                  matchInfoHome.splice(i, 1)
+                } else {
+                  returnHomePlayers[matchInfoHome[i].spPosition] = matchInfoHome[i]
                 }
-                returnAwayPlayers[matchInfoAway[i].spPosition] = matchInfoAway[i]
+                if (homeSpRating > maxSpRating1) {
+                  maxSpRating1 = homeSpRating
+                  maxSpId1 = homeItem.spId
+                }
+
+                //away
+                const awayItem = matchInfoAway[i]
+                const awaySpRating = awayItem.status.spRating
+                sumAwaySpRating += awaySpRating
+
+                if (matchInfoAway[i].spPosition === 28) {
+                  matchInfoAway.splice(i, 1)
+                } else {
+                  returnAwayPlayers[matchInfoAway[i].spPosition] = matchInfoAway[i]
+                }
+
+                if (awaySpRating > maxSpRating2) {
+                  maxSpRating2 = awaySpRating
+                  maxSpId2 = awayItem.spId
+                }
               }
 
               const maxSpId = maxSpRating1 > maxSpRating2 ? maxSpId1 : maxSpId2
 
-              for (const groupItem of homePlayerRows) {
-                for (const item of groupItem) {
-                  if (item.key in returnHomePlayers) {
-                    item.value = returnHomePlayers[item.key].spId
-                    item.spRating = returnHomePlayers[item.key].status.spRating.toFixed(1)
-                    if (returnHomePlayers[item.key].status.spRating < 7.0) {
-                      item.ratingColor = 'rateLow'
-                    } else if (returnHomePlayers[item.key].status.spRating < 8.0) {
-                      item.ratingColor = 'rateMid'
-                    } else if (returnHomePlayers[item.key].status.spRating > 8.0) {
-                      item.ratingColor = 'rateHigh'
+              for (let i = 0; i < playerRows.length; i++) {
+                for (let y = 0; y < playerRows[i].length; y++) {
+                  //home
+                  if (playerRows[i][y].key in returnHomePlayers) {
+                    homePlayerRows[i][y].value = returnHomePlayers[playerRows[i][y].key].spId
+                    homePlayerRows[i][y].goal = returnHomePlayers[playerRows[i][y].key].status.goal
+                    homePlayerRows[i][y].spRating = returnHomePlayers[playerRows[i][y].key].status.spRating.toFixed(1)
+                    if (returnHomePlayers[playerRows[i][y].key].status.spRating < 7.0) {
+                      homePlayerRows[i][y].ratingColor = 'rateLow'
+                    } else if (returnHomePlayers[playerRows[i][y].key].status.spRating < 8.0) {
+                      homePlayerRows[i][y].ratingColor = 'rateMid'
+                    } else if (returnHomePlayers[playerRows[i][y].key].status.spRating > 8.0) {
+                      homePlayerRows[i][y].ratingColor = 'rateHigh'
                     }
-                    if (returnHomePlayers[item.key].spId === maxSpId) {
-                      item.ratingColor = 'bestPlayer'
-                      item.spRating = item.spRating + '⭐️'
+                    if (returnHomePlayers[playerRows[i][y].key].spId === maxSpId) {
+                      homePlayerRows[i][y].ratingColor = 'bestPlayer'
+                      homePlayerRows[i][y].spRating += '⭐️'
+                    }
+                  }
+                  //away
+                  if (playerRows[i][y].key in returnAwayPlayers) {
+                    awayPlayerRows[i][y].value = returnAwayPlayers[playerRows[i][y].key].spId
+                    awayPlayerRows[i][y].goal = returnAwayPlayers[playerRows[i][y].key].status.goal
+                    awayPlayerRows[i][y].spRating = returnAwayPlayers[playerRows[i][y].key].status.spRating.toFixed(1)
+                    if (returnAwayPlayers[playerRows[i][y].key].status.spRating < 7.0) {
+                      awayPlayerRows[i][y].ratingColor = 'rateLow'
+                    } else if (returnAwayPlayers[playerRows[i][y].key].status.spRating < 8.0) {
+                      awayPlayerRows[i][y].ratingColor = 'rateMid'
+                    } else if (returnAwayPlayers[playerRows[i][y].key].status.spRating > 8.0) {
+                      awayPlayerRows[i][y].ratingColor = 'rateHigh'
+                    }
+                    if (returnAwayPlayers[playerRows[i][y].key].spId === maxSpId) {
+                      awayPlayerRows[i][y].ratingColor = 'bestPlayer'
+                      awayPlayerRows[i][y].spRating += '⭐️'
                     }
                   }
                 }
               }
 
-              for (const groupItem of awayPlayerRows) {
-                for (const item of groupItem) {
-                  if (item.key in returnAwayPlayers) {
-                    item.value = returnAwayPlayers[item.key].spId
-                    item.spRating = returnAwayPlayers[item.key].status.spRating.toFixed(1)
-                    if (returnAwayPlayers[item.key].status.spRating < 7.0) {
-                      item.ratingColor = 'rateLow'
-                    } else if (returnAwayPlayers[item.key].status.spRating < 8.0) {
-                      item.ratingColor = 'rateMid'
-                    } else if (returnAwayPlayers[item.key].status.spRating > 8.0) {
-                      item.ratingColor = 'rateHigh'
-                    }
-                    if (returnAwayPlayers[item.key].spId === maxSpId) {
-                      item.ratingColor = 'bestPlayer'
-                      item.spRating = item.spRating + '⭐️'
-                    }
-                  }
-                }
-              }
-              resultData.response[index].homePlayerRows = homePlayerRows
-              resultData.response[index].awayPlayerRows = awayPlayerRows
-              console.log(resultData.response)
+              totalData.response[index].homePlayerRows = homePlayerRows
+              totalData.response[index].awayPlayerRows = awayPlayerRows
+              totalData.response[index].matchInfo[0].matchDetail.playerRatingAvg = (sumHomeSpRating / 11).toFixed(1)
+              totalData.response[index].matchInfo[1].matchDetail.playerRatingAvg = (sumAwaySpRating / 11).toFixed(1)
+              totalData.findUserInfo = { winCount: winCount, winPossession: winPossession, avgGoal: avgGoal }
             })
             .catch((error) => {
               if (error.response.status === 404) {
-                resultData.userNotFound = true
-                resultData.response.push(error.message)
+                console.log(error)
+                totalData.userNotFound = true
+                totalData.response.push(error.message)
               }
             })
         }
+
+        resultData.response = totalData.response
+        resultData.nickname = totalData.nickname
+        resultData.level = totalData.level
+        resultData.findUserInfo = totalData.findUserInfo
+        resultData.userNotFound = totalData.userNotFound
+        loading.value = false
       })
       .catch((error) => {
         if (error.response.status === 404) {
-          resultData.userNotFound = true
-          resultData.response.push(error.message)
+          console.log(error)
+          totalData.userNotFound = true
+          totalData.response.push(error.message)
         }
       })
   }
 
   //닉네임으로 유저 조회 실패 콜백
   const findUserApiFailCallback = (apiErrorResult) => {
-    resultData.userNotFound = true
-    resultData.response.push(apiErrorResult.message)
+    totalData.userNotFound = true
+    totalData.response.push(apiErrorResult.message)
   }
 
   //닉네임으로 유저 조회 API
@@ -334,4 +423,6 @@ const axiosConnet = async (url, header, successCallback, failCallback) => {
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style>
 @import '@/assets/css/matchList.css';
+@import url('https://fonts.googleapis.com/css2?family=Staatliches&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@100&display=swap');
 </style>
