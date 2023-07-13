@@ -6,7 +6,7 @@
           <span class="avg">닉네임</span>
         </dt>
         <dd class="statTextWrab">
-          <p class="statText">{{ resultData.nickname }}</p>
+          <p class="statText">{{ data.nickname }}</p>
         </dd>
       </dl>
     </div>
@@ -17,7 +17,7 @@
           <span class="avg">레벨</span>
         </dt>
         <dd class="statTextWrab">
-          <p class="statText">{{ resultData.level }}</p>
+          <p class="statText">{{ data.findUserInfo.level }}</p>
         </dd>
       </dl>
     </div>
@@ -28,7 +28,7 @@
         </dt>
         <dd class="statTextWrab">
           <p class="statText">
-            <img style="width: 60px; height: 60px" :src="emitImageUrl(resultData.userDivisionInfo[0].division)" />
+            <img style="width: 60px; height: 60px" :src="emitImageUrl(data.userDivisionInfo[0].division)" />
           </p>
         </dd>
       </dl>
@@ -36,33 +36,33 @@
     <div class="avgStat">
       <dl>
         <dt>
-          <span class="tenGame">5경기 </span>
+          <span class="tenGame">{{ props.gameCount }}경기 </span>
           <span class="avg">평균 승리</span>
         </dt>
         <dd class="statTextWrab">
-          <p class="statText">{{ resultData.findUserInfo.winCount }}0%</p>
+          <p class="statText">{{ ((props.winCount / props.gameCount) * 100).toFixed(0) }}%</p>
         </dd>
       </dl>
     </div>
     <div class="avgStat">
       <dl>
         <dt>
-          <span class="tenGame">5경기 </span>
+          <span class="tenGame">{{ props.gameCount }}경기 </span>
           <span class="avg">평균 점유율</span>
         </dt>
         <dd class="statTextWrab">
-          <p class="statText">{{ resultData.findUserInfo.winPossession / 5 }}%</p>
+          <p class="statText">{{ (props.winPossession / props.gameCount).toFixed(1) }}%</p>
         </dd>
       </dl>
     </div>
     <div class="avgStat">
       <dl>
         <dt>
-          <span class="tenGame">5경기 </span>
+          <span class="tenGame">{{ props.gameCount }}경기 </span>
           <span class="avg">평균 득점</span>
         </dt>
         <dd class="statTextWrab">
-          <p class="statText">{{ resultData.findUserInfo.avgGoal / 5 }}</p>
+          <p class="statText">{{ (props.avgGoal / props.gameCount).toFixed(1) }}</p>
         </dd>
       </dl>
     </div>
@@ -82,7 +82,7 @@ import { defineProps, ref } from 'vue'
   부모 컴포넌트의 상태를 갱신해야 할 때.
  */
 const props = defineProps({
-  userProfile: {
+  resultData: {
     type: Object,
     required: true,
   },
@@ -90,8 +90,24 @@ const props = defineProps({
     type: Function,
     required: true,
   },
+  avgGoal: {
+    type: Number,
+    required: true,
+  },
+  winCount: {
+    type: Number,
+    required: true,
+  },
+  winPossession: {
+    type: Number,
+    required: true,
+  },
+  gameCount: {
+    type: Number,
+    required: true,
+  },
 })
-const resultData = ref(props.userProfile)
+const data = ref(props.resultData)
 
 const emitImageUrl = (division) => {
   return props.findDivision(division)

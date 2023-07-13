@@ -1,5 +1,5 @@
 <template>
-  <div style="max-width: 1400px; margin: 0px auto">
+  <div style="max-width: 1400px; margin: 0px auto; padding: 20px 0px">
     <div class="hedaerTitle">
       <div class="text-box">
         <div class="text-wrap">
@@ -25,17 +25,17 @@
     <div v-if="resultData.response.length === 0"></div>
     <div v-else>
       <!-- userprofile component -->
-      <UserProfile :userProfile="resultData" :findDivision="findDivision" />
-
+      <UserProfile
+        :resultData="resultData"
+        :findDivision="findDivision"
+        :avgGoal="resultData.findUserInfo.avgGoal"
+        :winCount="resultData.findUserInfo.winCount"
+        :winPossession="resultData.findUserInfo.winPossession"
+        :gameCount="resultData.response.length"
+      />
       <div class="accordion" role="tablist">
         <b-card no-body class="cardTitle mb-2" v-for="(result, index) in resultData.response" :key="result.matchId">
-          <b-card-header
-            header-tag="header"
-            :class="'cardHedaer-' + result.gameResult"
-            role="tab"
-            @click="toggleCollapse('accordion-' + (index + 1))"
-            style="border: none"
-          >
+          <b-card-header header-tag="header" class="cardHedaer" role="tab" @click="toggleCollapse('accordion-' + (index + 1))" style="border: none">
             <div :class="'test-' + result.matchInfo[0].matchDetail.matchResult">
               <div style="font-size: 15px; color: white">Home</div>
               <div style="align-items: center; width: 100%">
@@ -92,6 +92,7 @@
           </b-collapse>
         </b-card>
       </div>
+      <div class="moreBtnArea" @click="moreButton">더보기+</div>
     </div>
   </div>
 </template>
@@ -104,12 +105,11 @@ import LoadingOverlay from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/css/index.css'
 import UserProfile from './matchList/UserProfile.vue'
 import MatchStat from './matchList/MatchStat.vue'
-import PlayersCard from './PlayersCard.vue'
+import PlayersCard from './matchList/PlayersCard.vue'
 
 const loading = ref(false)
-
 const visible = reactive({})
-let resultData = reactive({ nickname: '', response: [], userNotFound: false, findUserInfo: {} })
+const resultData = reactive({ nickname: '', response: [], userNotFound: false, findUserInfo: {} })
 const allPlayers = ref([])
 const allPosition = ref({})
 const allDivision = ref({})
@@ -117,6 +117,11 @@ const store = useStore()
 const positions = computed(() => store.state.positions)
 const playerRows = store.state.playerRows
 let totalData = { nickname: '', response: [], userNotFound: true, findUserInfo: {} }
+const headers = {
+  'Content-Type': 'application/json',
+  Authorization:
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJYLUFwcC1SYXRlLUxpbWl0IjoiNTAwOjEwIiwiYWNjb3VudF9pZCI6IjM4Njg2NzczNyIsImF1dGhfaWQiOiIyIiwiZXhwIjoxNzAzNTY4NTg1LCJpYXQiOjE2ODgwMTY1ODUsIm5iZiI6MTY4ODAxNjU4NSwic2VydmljZV9pZCI6IjQzMDAxMTQ4MSIsInRva2VuX3R5cGUiOiJBY2Nlc3NUb2tlbiJ9.07txWeL2lyLvtYvTcCVpGTRQpD5GZ7I9lQH6nnsXD1g',
+}
 
 onMounted(async () => {
   const positionArray = positions.value.split(',')
@@ -199,200 +204,10 @@ const findPlayer = (spId) => {
 
 const submitButton = () => {
   loading.value = true
+  totalData.response = []
 
-  const headers = {
-    'Content-Type': 'application/json',
-    Authorization:
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJYLUFwcC1SYXRlLUxpbWl0IjoiNTAwOjEwIiwiYWNjb3VudF9pZCI6IjM4Njg2NzczNyIsImF1dGhfaWQiOiIyIiwiZXhwIjoxNzAzNTY4NTg1LCJpYXQiOjE2ODgwMTY1ODUsIm5iZiI6MTY4ODAxNjU4NSwic2VydmljZV9pZCI6IjQzMDAxMTQ4MSIsInRva2VuX3R5cGUiOiJBY2Nlc3NUb2tlbiJ9.07txWeL2lyLvtYvTcCVpGTRQpD5GZ7I9lQH6nnsXD1g',
-  }
   //닉네임으로 유저 조회 url
   const findUserApiUrl = `https://api.nexon.co.kr/fifaonline4/v1.0/users?nickname=${totalData.nickname}`
-
-  //닉네임으로 유저 조회 성공 콜백
-  const findUserApiCallback = async (apiResult) => {
-    totalData.level = apiResult.data.level
-    totalData.nickname = apiResult.data.nickname
-    //찾은 유저의 경기 기록 조회 url
-    const urls = `https://api.nexon.co.kr/fifaonline4/v1.0/users/${apiResult.data.accessId}/matches?matchtype=50&offset=0&limit=5`
-    const bestDivisionUrls = `https://api.nexon.co.kr/fifaonline4/v1.0/users/${apiResult.data.accessId}/maxdivision`
-    await axios
-      .get(urls, {
-        headers: headers,
-      })
-      .then(async (res) => {
-        let winCount = 0
-        let winPossession = 0
-        let avgGoal = 0
-        await axios
-          .get(bestDivisionUrls, {
-            headers: headers,
-          })
-          .then((res) => {
-            resultData.userDivisionInfo = res.data
-          })
-          .catch((error) => {
-            if (error.response.status === 404) {
-              console.log('실패')
-            }
-          })
-        totalData.response.splice(0)
-        for (const [index, element] of res.data.entries()) {
-          let visibleObjKey = 'accordion-' + (index + 1)
-          visible[visibleObjKey] = false
-          const urls2 = `https://api.nexon.co.kr/fifaonline4/v1.0/matches/${element}` // 매치 상세조회 url
-          await axios
-            .get(urls2, {
-              headers: headers,
-            })
-            .then((detail) => {
-              totalData.response.push(detail.data)
-              for (let i = 0; i < 2; i++) {
-                if (detail.data.matchInfo[i].accessId === apiResult.data.accessId) {
-                  if (detail.data.matchInfo[i].matchDetail.matchResult === '승') {
-                    detail.data.gameResult = 'win'
-                    detail.data.matchInfo[i].matchDetail.matchResult === '승' ? (winCount += 1) : winCount
-                  } else if (detail.data.matchInfo[i].matchDetail.matchResult === '무') {
-                    detail.data.gameResult = 'draw'
-                  } else {
-                    detail.data.gameResult = 'lose'
-                  }
-                  winPossession += detail.data.matchInfo[i].matchDetail.possession
-                  avgGoal += detail.data.matchInfo[i].shoot.goalTotal
-                } else {
-                  const bestDivisionUrls2 = `https://api.nexon.co.kr/fifaonline4/v1.0/users/${detail.data.matchInfo[i].accessId}/maxdivision`
-                  axios
-                    .get(bestDivisionUrls2, {
-                      headers: headers,
-                    })
-                    .then((res) => {
-                      resultData.otherDivisionInfo = res.data
-                    })
-                    .catch((error) => {
-                      if (error.response.status === 404) {
-                        console.log('실패')
-                      }
-                    })
-                }
-              }
-
-              let homePlayerRows = JSON.parse(JSON.stringify(playerRows))
-              let awayPlayerRows = JSON.parse(JSON.stringify(playerRows))
-              let returnHomePlayers = {}
-              let returnAwayPlayers = {}
-              let matchInfoHome = detail.data.matchInfo[0].player
-              let matchInfoAway = detail.data.matchInfo[1].player
-
-              let maxSpRating1 = -Infinity
-              let maxSpId1 = null
-              let sumHomeSpRating = 0
-
-              let maxSpRating2 = -Infinity
-              let maxSpId2 = null
-              let sumAwaySpRating = 0
-
-              for (let i = matchInfoHome.length - 1; i >= 0; i--) {
-                //home
-                const homeItem = matchInfoHome[i]
-                const homeSpRating = homeItem.status.spRating
-                sumHomeSpRating += homeSpRating
-                if (matchInfoHome[i].spPosition === 28) {
-                  matchInfoHome.splice(i, 1)
-                } else {
-                  returnHomePlayers[matchInfoHome[i].spPosition] = matchInfoHome[i]
-                }
-                if (homeSpRating > maxSpRating1) {
-                  maxSpRating1 = homeSpRating
-                  maxSpId1 = homeItem.spId
-                }
-
-                //away
-                const awayItem = matchInfoAway[i]
-                const awaySpRating = awayItem.status.spRating
-                sumAwaySpRating += awaySpRating
-
-                if (matchInfoAway[i].spPosition === 28) {
-                  matchInfoAway.splice(i, 1)
-                } else {
-                  returnAwayPlayers[matchInfoAway[i].spPosition] = matchInfoAway[i]
-                }
-
-                if (awaySpRating > maxSpRating2) {
-                  maxSpRating2 = awaySpRating
-                  maxSpId2 = awayItem.spId
-                }
-              }
-
-              const maxSpId = maxSpRating1 > maxSpRating2 ? maxSpId1 : maxSpId2
-
-              for (let i = 0; i < playerRows.length; i++) {
-                for (let y = 0; y < playerRows[i].length; y++) {
-                  //home
-                  if (playerRows[i][y].key in returnHomePlayers) {
-                    homePlayerRows[i][y].value = returnHomePlayers[playerRows[i][y].key].spId
-                    homePlayerRows[i][y].goal = returnHomePlayers[playerRows[i][y].key].status.goal
-                    homePlayerRows[i][y].spRating = returnHomePlayers[playerRows[i][y].key].status.spRating.toFixed(1)
-                    if (returnHomePlayers[playerRows[i][y].key].status.spRating < 7.0) {
-                      homePlayerRows[i][y].ratingColor = 'rateLow'
-                    } else if (returnHomePlayers[playerRows[i][y].key].status.spRating < 8.0) {
-                      homePlayerRows[i][y].ratingColor = 'rateMid'
-                    } else if (returnHomePlayers[playerRows[i][y].key].status.spRating > 8.0) {
-                      homePlayerRows[i][y].ratingColor = 'rateHigh'
-                    }
-                    if (returnHomePlayers[playerRows[i][y].key].spId === maxSpId) {
-                      homePlayerRows[i][y].ratingColor = 'bestPlayer'
-                      homePlayerRows[i][y].spRating += '⭐️'
-                    }
-                  }
-                  //away
-                  if (playerRows[i][y].key in returnAwayPlayers) {
-                    awayPlayerRows[i][y].value = returnAwayPlayers[playerRows[i][y].key].spId
-                    awayPlayerRows[i][y].goal = returnAwayPlayers[playerRows[i][y].key].status.goal
-                    awayPlayerRows[i][y].spRating = returnAwayPlayers[playerRows[i][y].key].status.spRating.toFixed(1)
-                    if (returnAwayPlayers[playerRows[i][y].key].status.spRating < 7.0) {
-                      awayPlayerRows[i][y].ratingColor = 'rateLow'
-                    } else if (returnAwayPlayers[playerRows[i][y].key].status.spRating < 8.0) {
-                      awayPlayerRows[i][y].ratingColor = 'rateMid'
-                    } else if (returnAwayPlayers[playerRows[i][y].key].status.spRating > 8.0) {
-                      awayPlayerRows[i][y].ratingColor = 'rateHigh'
-                    }
-                    if (returnAwayPlayers[playerRows[i][y].key].spId === maxSpId) {
-                      awayPlayerRows[i][y].ratingColor = 'bestPlayer'
-                      awayPlayerRows[i][y].spRating += '⭐️'
-                    }
-                  }
-                }
-              }
-
-              totalData.response[index].homePlayerRows = homePlayerRows
-              totalData.response[index].awayPlayerRows = awayPlayerRows
-              totalData.response[index].matchInfo[0].matchDetail.playerRatingAvg = (sumHomeSpRating / 11).toFixed(1)
-              totalData.response[index].matchInfo[1].matchDetail.playerRatingAvg = (sumAwaySpRating / 11).toFixed(1)
-              totalData.findUserInfo = { winCount: winCount, winPossession: winPossession, avgGoal: avgGoal }
-            })
-            .catch((error) => {
-              if (error.response.status === 404) {
-                console.log(error)
-                totalData.userNotFound = true
-                totalData.response.push(error.message)
-              }
-            })
-        }
-
-        resultData.response = totalData.response
-        resultData.nickname = totalData.nickname
-        resultData.level = totalData.level
-        resultData.findUserInfo = totalData.findUserInfo
-        resultData.userNotFound = totalData.userNotFound
-        loading.value = false
-      })
-      .catch((error) => {
-        if (error.response.status === 404) {
-          console.log(error)
-          totalData.userNotFound = true
-          totalData.response.push(error.message)
-        }
-      })
-  }
 
   //닉네임으로 유저 조회 실패 콜백
   const findUserApiFailCallback = (apiErrorResult) => {
@@ -402,6 +217,243 @@ const submitButton = () => {
 
   //닉네임으로 유저 조회 API
   axiosConnet(findUserApiUrl, headers, findUserApiCallback, findUserApiFailCallback)
+}
+
+const findUserApiCallback = async (apiResult) => {
+  totalData.findUserInfo = { accessId: apiResult.data.accessId, level: apiResult.data.level, winCount: 0, winPossession: 0, avgGoal: 0 }
+
+  //찾은 유저의 경기 기록 조회 url
+  const urls = `https://api.nexon.co.kr/fifaonline4/v1.0/users/${totalData.findUserInfo.accessId}/matches?matchtype=50&offset=0&limit=3`
+  const bestDivisionUrls = `https://api.nexon.co.kr/fifaonline4/v1.0/users/${totalData.findUserInfo.accessId}/maxdivision`
+  await axios
+    .get(urls, {
+      headers: headers,
+    })
+    .then(async (res) => {
+      await axios
+        .get(bestDivisionUrls, {
+          headers: headers,
+        })
+        .then((res) => {
+          totalData.userDivisionInfo = res.data
+        })
+        .catch((error) => {
+          if (error.response.status === 404) {
+            console.log('실패')
+          }
+        })
+
+      for (const [index, element] of res.data.entries()) {
+        //아코디언 visible 처리
+        let visibleObjKey = 'accordion-' + (totalData.response.length + 1)
+        visible[visibleObjKey] = false
+
+        const urls2 = `https://api.nexon.co.kr/fifaonline4/v1.0/matches/${element}` // 매치 상세조회 url
+        await axios
+          .get(urls2, {
+            headers: headers,
+          })
+          .then((detail) => {
+            totalData.response.push(detail.data) //매치상세 추가
+            findUserWinning(detail) //승률셋팅
+            groundOnplayer(detail.data, index) //선수셋팅
+          })
+          .catch((error) => {
+            if (error.response.status === 404) {
+              console.log(error)
+              console.log(index)
+            }
+          })
+      }
+      resultData.response = totalData.response
+      resultData.userDivisionInfo = totalData.userDivisionInfo
+      resultData.findUserInfo = totalData.findUserInfo
+      resultData.userNotFound = totalData.userNotFound
+      resultData.nickname = totalData.nickname
+    })
+    .catch((error) => {
+      if (error.response.status === 404) {
+        console.log(error)
+      }
+    })
+  loading.value = false
+}
+
+const moreButton = async () => {
+  loading.value = true
+  //찾은 유저의 경기 기록 조회 url
+  const urls = `https://api.nexon.co.kr/fifaonline4/v1.0/users/${resultData.findUserInfo.accessId}/matches?matchtype=50&offset=${resultData.response.length}&limit=3`
+
+  await axios
+    .get(urls, {
+      headers: headers,
+    })
+    .then(async (res) => {
+      for (const [index, element] of res.data.entries()) {
+        //아코디언 visible 처리
+        let visibleObjKey = 'accordion-' + (totalData.response.length + 1)
+        visible[visibleObjKey] = false
+
+        const urls2 = `https://api.nexon.co.kr/fifaonline4/v1.0/matches/${element}` // 매치 상세조회 url
+        await axios
+          .get(urls2, {
+            headers: headers,
+          })
+          .then((detail) => {
+            totalData.response.push(detail.data) //매치상세추가
+            findUserWinning(detail) //승률셋팅
+            groundOnplayer(detail.data, totalData.response.length - 1) //선수셋팅
+          })
+          .catch((error) => {
+            if (error.response.status === 404) {
+              console.log(error)
+              console.log(index)
+            }
+          })
+      }
+      resultData.response = totalData.response
+      loading.value = false
+      console.log(resultData)
+    })
+    .catch((error) => {
+      if (error.response.status === 404) {
+        console.log(error)
+      }
+    })
+}
+
+const groundOnplayer = (detailData, index) => {
+  //상세 조회 로직
+  let homePlayerRows = JSON.parse(JSON.stringify(playerRows))
+  let awayPlayerRows = JSON.parse(JSON.stringify(playerRows))
+  let returnHomePlayers = {}
+  let returnAwayPlayers = {}
+  let matchInfoHome = detailData.matchInfo[0].player
+  let matchInfoAway = detailData.matchInfo[1].player
+
+  let maxSpRating1 = -Infinity
+  let maxSpId1 = null
+  let sumHomeSpRating = 0
+
+  let maxSpRating2 = -Infinity
+  let maxSpId2 = null
+  let sumAwaySpRating = 0
+
+  for (let i = matchInfoHome.length - 1; i >= 0; i--) {
+    //home
+    const homeItem = matchInfoHome[i]
+    const homeSpRating = homeItem.status.spRating
+    sumHomeSpRating += homeSpRating
+    if (matchInfoHome[i].spPosition === 28) {
+      matchInfoHome.splice(i, 1)
+    } else {
+      returnHomePlayers[matchInfoHome[i].spPosition] = matchInfoHome[i]
+    }
+    if (homeSpRating > maxSpRating1) {
+      maxSpRating1 = homeSpRating
+      maxSpId1 = homeItem.spId
+    }
+
+    //away
+    const awayItem = matchInfoAway[i]
+    const awaySpRating = awayItem.status.spRating
+    sumAwaySpRating += awaySpRating
+
+    if (matchInfoAway[i].spPosition === 28) {
+      matchInfoAway.splice(i, 1)
+    } else {
+      returnAwayPlayers[matchInfoAway[i].spPosition] = matchInfoAway[i]
+    }
+
+    if (awaySpRating > maxSpRating2) {
+      maxSpRating2 = awaySpRating
+      maxSpId2 = awayItem.spId
+    }
+  }
+
+  const maxSpId = maxSpRating1 > maxSpRating2 ? maxSpId1 : maxSpId2
+
+  for (let i = 0; i < playerRows.length; i++) {
+    for (let y = 0; y < playerRows[i].length; y++) {
+      //home
+      if (playerRows[i][y].key in returnHomePlayers) {
+        homePlayerRows[i][y].value = returnHomePlayers[playerRows[i][y].key].spId
+        homePlayerRows[i][y].goal = returnHomePlayers[playerRows[i][y].key].status.goal
+        homePlayerRows[i][y].spRating = returnHomePlayers[playerRows[i][y].key].status.spRating.toFixed(1)
+        if (returnHomePlayers[playerRows[i][y].key].status.spRating < 7.0) {
+          homePlayerRows[i][y].ratingColor = 'rateLow'
+        } else if (returnHomePlayers[playerRows[i][y].key].status.spRating <= 8.0) {
+          homePlayerRows[i][y].ratingColor = 'rateMid'
+        } else if (returnHomePlayers[playerRows[i][y].key].status.spRating > 8.0) {
+          homePlayerRows[i][y].ratingColor = 'rateHigh'
+        }
+        if (returnHomePlayers[playerRows[i][y].key].spId === maxSpId) {
+          homePlayerRows[i][y].ratingColor = 'bestPlayer'
+          homePlayerRows[i][y].spRating += '⭐️'
+        }
+      }
+      //away
+      if (playerRows[i][y].key in returnAwayPlayers) {
+        awayPlayerRows[i][y].value = returnAwayPlayers[playerRows[i][y].key].spId
+        awayPlayerRows[i][y].goal = returnAwayPlayers[playerRows[i][y].key].status.goal
+        awayPlayerRows[i][y].spRating = returnAwayPlayers[playerRows[i][y].key].status.spRating.toFixed(1)
+        if (returnAwayPlayers[playerRows[i][y].key].status.spRating < 7.0) {
+          awayPlayerRows[i][y].ratingColor = 'rateLow'
+        } else if (returnAwayPlayers[playerRows[i][y].key].status.spRating <= 8.0) {
+          awayPlayerRows[i][y].ratingColor = 'rateMid'
+        } else if (returnAwayPlayers[playerRows[i][y].key].status.spRating > 8.0) {
+          awayPlayerRows[i][y].ratingColor = 'rateHigh'
+        }
+        if (returnAwayPlayers[playerRows[i][y].key].spId === maxSpId) {
+          awayPlayerRows[i][y].ratingColor = 'bestPlayer'
+          awayPlayerRows[i][y].spRating += '⭐️'
+        }
+      }
+    }
+  }
+
+  totalData.response[index].homePlayerRows = homePlayerRows
+  totalData.response[index].awayPlayerRows = awayPlayerRows
+  totalData.response[index].matchInfo[0].matchDetail.playerRatingAvg = (sumHomeSpRating / 11).toFixed(1)
+  totalData.response[index].matchInfo[1].matchDetail.playerRatingAvg = (sumAwaySpRating / 11).toFixed(1)
+}
+
+const findUserWinning = (detail) => {
+  let winCount = 0
+  let winPossession = 0
+  let avgGoal = 0
+
+  for (let i = 0; i < 2; i++) {
+    if (detail.data.matchInfo[i].accessId === totalData.findUserInfo.accessId) {
+      if (detail.data.matchInfo[i].matchDetail.matchResult === '승') {
+        detail.data.gameResult = 'win'
+        detail.data.matchInfo[i].matchDetail.matchResult === '승' ? (winCount += 1) : winCount
+      } else if (detail.data.matchInfo[i].matchDetail.matchResult === '무') {
+        detail.data.gameResult = 'draw'
+      } else {
+        detail.data.gameResult = 'lose'
+      }
+      winPossession += detail.data.matchInfo[i].matchDetail.possession
+      avgGoal += detail.data.matchInfo[i].shoot.goalTotal
+    } else {
+      const bestDivisionUrls2 = `https://api.nexon.co.kr/fifaonline4/v1.0/users/${detail.data.matchInfo[i].accessId}/maxdivision`
+      axios
+        .get(bestDivisionUrls2, {
+          headers: headers,
+        })
+        .then((res) => {
+          resultData.otherDivisionInfo = res.data
+        })
+        .catch((error) => {
+          if (error.response.status === 404) {
+            console.log('실패')
+          }
+        })
+    }
+  }
+  totalData.findUserInfo.winCount += winCount
+  totalData.findUserInfo.winPossession += winPossession
+  totalData.findUserInfo.avgGoal += avgGoal
 }
 
 const axiosConnet = async (url, header, successCallback, failCallback) => {
