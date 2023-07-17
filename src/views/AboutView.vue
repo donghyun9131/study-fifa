@@ -1,15 +1,19 @@
 <template>
   <div>
-    <b-button :class="visible ? null : 'collapsed'" :aria-expanded="visible ? 'true' : 'false'" aria-controls="collapse-4" @click="visible = !visible">
-      Toggle Collapse
-    </b-button>
-    <b-collapse id="collapse-4" v-model="visible" class="mt-2">
-      <b-card>I should start open!</b-card>
-    </b-collapse>
+    <b-button v-b-modal.modal-xl variant="primary">xl modal</b-button>
+    <b-button v-b-modal.modal-lg variant="primary">lg modal</b-button>
+    <b-button v-b-modal.modal-sm variant="primary">sm modal</b-button>
+
+    <b-modal id="modal-xl" size="xl" title="Extra Large Modal">Hello Extra Large Modal!</b-modal>
+    <b-modal id="modal-lg" size="lg" title="Large Modal">Hello Large Modal!</b-modal>
+    <b-modal id="modal-sm" size="sm" title="Small Modal">Hello Small Modal!</b-modal>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-const visible = ref(true)
+// import { ref } from 'vue'
+
+// const modalShow = ref(false)
 </script>
+
+<style></style>

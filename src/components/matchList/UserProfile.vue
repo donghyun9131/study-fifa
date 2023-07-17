@@ -6,7 +6,7 @@
           <span class="avg">닉네임</span>
         </dt>
         <dd class="statTextWrab">
-          <p class="statText">{{ data.nickname }}</p>
+          <p class="statText">{{ data.resultData.nickname }}</p>
         </dd>
       </dl>
     </div>
@@ -17,7 +17,7 @@
           <span class="avg">레벨</span>
         </dt>
         <dd class="statTextWrab">
-          <p class="statText">{{ data.findUserInfo.level }}</p>
+          <p class="statText">{{ data.resultData.findUserInfo.level }}</p>
         </dd>
       </dl>
     </div>
@@ -28,7 +28,7 @@
         </dt>
         <dd class="statTextWrab">
           <p class="statText">
-            <img style="width: 60px; height: 60px" :src="emitImageUrl(data.userDivisionInfo[0].division)" />
+            <img style="width: 60px; height: 60px" :src="emitImageUrl(data.resultData.userDivisionInfo[0].division)" />
           </p>
         </dd>
       </dl>
@@ -36,33 +36,33 @@
     <div class="avgStat">
       <dl>
         <dt>
-          <span class="tenGame">{{ props.gameCount }}경기 </span>
+          <span class="tenGame">{{ data.resultData.response.length }}경기 </span>
           <span class="avg">평균 승리</span>
         </dt>
         <dd class="statTextWrab">
-          <p class="statText">{{ ((props.winCount / props.gameCount) * 100).toFixed(0) }}%</p>
+          <p class="statText">{{ ((data.resultData.findUserInfo.winCount / data.resultData.response.length) * 100).toFixed(0) }}%</p>
         </dd>
       </dl>
     </div>
     <div class="avgStat">
       <dl>
         <dt>
-          <span class="tenGame">{{ props.gameCount }}경기 </span>
+          <span class="tenGame">{{ data.resultData.response.length }}경기 </span>
           <span class="avg">평균 점유율</span>
         </dt>
         <dd class="statTextWrab">
-          <p class="statText">{{ (props.winPossession / props.gameCount).toFixed(1) }}%</p>
+          <p class="statText">{{ (data.resultData.findUserInfo.winPossession / data.resultData.response.length).toFixed(1) }}%</p>
         </dd>
       </dl>
     </div>
     <div class="avgStat">
       <dl>
         <dt>
-          <span class="tenGame">{{ props.gameCount }}경기 </span>
+          <span class="tenGame">{{ data.resultData.response.length }}경기 </span>
           <span class="avg">평균 득점</span>
         </dt>
         <dd class="statTextWrab">
-          <p class="statText">{{ (props.avgGoal / props.gameCount).toFixed(1) }}</p>
+          <p class="statText">{{ (data.resultData.findUserInfo.avgGoal / data.resultData.response.length).toFixed(1) }}</p>
         </dd>
       </dl>
     </div>
@@ -70,7 +70,7 @@
 </template>
 
 <script setup>
-import { defineProps, ref } from 'vue'
+import { defineProps, reactive } from 'vue'
 
 /**
  * Props로 함수를 전달하는 방식:
@@ -90,24 +90,29 @@ const props = defineProps({
     type: Function,
     required: true,
   },
-  avgGoal: {
-    type: Number,
-    required: true,
-  },
-  winCount: {
-    type: Number,
-    required: true,
-  },
-  winPossession: {
-    type: Number,
-    required: true,
-  },
-  gameCount: {
-    type: Number,
-    required: true,
-  },
 })
-const data = ref(props.resultData)
+
+// resultData를 새로운 객체로 할당하여 변경을 감지하도록 함
+const data = reactive({
+  resultData: props.resultData,
+})
+
+// avgGoal: {
+//   type: Number,
+//   required: true,
+// },
+// winCount: {
+//   type: Number,
+//   required: true,
+// },
+// winPossession: {
+//   type: Number,
+//   required: true,
+// },
+// gameCount: {
+//   type: Number,
+//   required: true,
+// },
 
 const emitImageUrl = (division) => {
   return props.findDivision(division)

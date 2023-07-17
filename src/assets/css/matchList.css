@@ -4,6 +4,7 @@ body {
   background-size: cover;
   background-attachment: fixed;
   height: 100vh;
+  overflow: auto;
 }
 
 h3 {
@@ -333,6 +334,7 @@ a {
   font-weight: 600;
   color: rgb(120, 121, 122);
 }
+
 .titleCenter {
   display: flex;
   width: 100%;
@@ -360,4 +362,172 @@ a {
 .moreBtnArea:hover {
   cursor: pointer;
   background: linear-gradient(rgb(64, 142, 238), rgb(47, 77, 148));
+}
+/** lib 없이 모달 구현  */
+
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 100%, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translateZ(0);
+  }
+}
+.player-modal,
+.overlay {
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 9999;
+}
+.overlay {
+  opacity: 0.2;
+  background-color: black;
+}
+.modal-card {
+  max-width: 40%;
+  min-width: 40%;
+  margin: auto;
+  padding: 20px;
+  background-color: white;
+  position: fixed;
+  min-height: 400px;
+  max-height: 500px;
+  left: 30%;
+  top: 15%;
+  z-index: 9999;
+  opacity: 1;
+  border-radius: 10px;
+  overflow: auto;
+  box-shadow: 5px 10px 10px 1px rgba(0, 0, 0, 0.3);
+  animation: fadeInUp 0.6s;
+}
+.modal-body {
+  position: relative;
+  padding: var(--bs-modal-padding);
+  display: flex;
+}
+.modal-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  position: relative;
+  text-align: left;
+}
+.playerInfoImg {
+  box-sizing: content-box;
+  width: 150px;
+  height: 150px;
+  background: rgb(255, 232, 204);
+  border: 2px solid rgba(173, 181, 189, 0.54);
+  border-radius: 50%;
+  overflow: hidden;
+  margin: 10px auto;
+}
+
+.seasonPlayerImg {
+  position: relative;
+  top: 25%;
+  border-radius: 50%;
+  left: 8%;
+}
+.seasonLogoImg {
+  position: relative;
+  top: 46%;
+  left: -57%;
+  border-radius: 50%;
+  max-width: 40px;
+}
+
+.playerInfoName {
+  font-size: 16px;
+  font-weight: bold;
+  display: flex;
+  justify-content: center;
+  position: relative;
+  top: 39%;
+  padding: 3px;
+}
+.playerCardInfo {
+  display: flex;
+  justify-content: space-evenly;
+  padding: 20px;
+}
+.cardInfoTitle {
+  font-weight: bold;
+  font-size: 18px;
+  padding: 5px;
+  color: rgb(117, 117, 117);
+}
+.seasonCardImg {
+  background-repeat: no-repeat;
+  background-position: center;
+  min-height: 350px;
+  width: 30%;
+}
+.gradeNum {
+  width: 30px;
+  height: 30px;
+  border: 1px solid gray;
+  font-size: 20px;
+}
+.gradeNum.nomal {
+  color: #c5c8c9 !important;
+  background: #51545a !important;
+  background: linear-gradient(140deg, #51545a 0%, #51545a 0%, #42464d 100%) !important;
+  border: 1.5px solid #393a3c !important;
+  border-top-color: #62676d !important;
+  border-left-color: #62676d !important;
+  border-right-color: #393a3c !important;
+}
+.gradeNum.bronze {
+  color: #7e3f27 !important;
+  background: #de946b !important;
+  background: linear-gradient(140deg, #de946b 0%, #de946b 0%, #ad5f42 100%) !important;
+  border: 1.5px solid #864229 !important;
+  border-top-color: #e4b7a2 !important;
+  border-left-color: #e4b7a2 !important;
+  border-right-color: #864229;
+}
+.gradeNum.silver {
+  color: #4e545e !important;
+  background: #020024 !important;
+  background: linear-gradient(140deg, rgb(2, 0, 36) 0%, rgb(216, 217, 220) 0%, rgb(184, 189, 202) 100%) !important;
+  border: 1.5px solid #a5a8ae !important;
+  border-top-color: #d8dadc !important;
+  border-left-color: #d8dadc !important;
+  border-right-color: #a9aaae !important;
+}
+.gradeNum.gold {
+  color: #695100 !important;
+  background: #f9dd62 !important;
+  background: linear-gradient(140deg, #f9dd62 0%, #f9dd62 0%, #dca908 100%) !important;
+  border: 1.5px solid #cda000 !important;
+  border-top-color: #e9d36c !important;
+  border-left-color: #e9d36c !important;
+  border-right-color: #cda000 !important;
+}
+
+.playerStats {
+  padding: 30px 0px;
+  text-align: left;
+  display: flex;
+}
+.playersStatSpan {
+  font-size: 15px;
+  font-weight: 800;
+  padding: 1px;
+}
+.statsRows {
+  display: grid;
+  padding: 0px 10px;
+}
+.playerStatsTitle {
+  font-size: 18px;
+  font-weight: bold;
 }
