@@ -7,16 +7,14 @@
           <button style="background: transparent; border: 0px">X</button>
         </div> -->
         <div class="modal-body">
-          <div
-            class="seasonCardImg"
-            :style="'background-image:url(' + props.playerInfo.playerInfo.seasonCardImg + ')'"
-            @click="openFifa4Home(props.playerInfo.spId)"
-          >
+          <div class="seasonCardImg" :style="'background-image:url(' + props.playerInfo.playerInfo.seasonCardImg + ')'">
             <img :src="'https://fo4.dn.nexoncdn.co.kr/live/externalAssets/common/playersAction/p' + props.playerInfo.spId + '.png'" class="seasonPlayerImg" />
-            <img
-              :src="'https://ssl.nexon.com/s2/game/fo4/obt/externalAssets/season/' + props.playerInfo.playerInfo.className + '_big.png'"
-              class="seasonLogoImg"
-            />
+            <div class="seasonLogoImg">
+              <img
+                :src="'https://ssl.nexon.com/s2/game/fo4/obt/externalAssets/season/' + props.playerInfo.playerInfo.className + '_big.png'"
+                style="max-width: 40px"
+              />
+            </div>
             <div class="playerInfoName">
               <img :src="props.playerInfo.playerInfo.seasonImg" style="padding-right: 10px" />
               {{ props.playerInfo.playerName }}
@@ -155,12 +153,8 @@ const openModal = () => {
   emits('close', false)
 }
 
-const openFifa4Home = (spId) => {
-  let fifa4HomeUrl = `https://fifaonline4.nexon.com/DataCenter/PlayerInfo?spid=${spId}`
-  window.open(fifa4HomeUrl, '_blank')
-}
-
-// const emitFindSeasion = () => {
-//   emits('findSeason', false)
+// const openFifa4Home = (spId) => {
+//   let fifa4HomeUrl = `https://fifaonline4.nexon.com/DataCenter/PlayerInfo?spid=${spId}`
+//   window.open(fifa4HomeUrl, '_blank')
 // }
 </script>
