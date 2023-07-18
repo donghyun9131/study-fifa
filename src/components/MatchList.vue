@@ -12,7 +12,7 @@
         <b-row class="justify-content-md-center p-5">
           <b-col cols="12" md="auto">
             <b-input-group size="lg" class="mb-1">
-              <b-form-input v-model="totalData.nickname" placeholder="구단주명"></b-form-input>
+              <b-form-input v-model="totalData.nickname" placeholder="구단주명" @keyup.enter="submitButton"></b-form-input>
               <b-input-group-append>
                 <b-button size="lg" text="Button" variant="primary" @click="submitButton">검색</b-button>
               </b-input-group-append>
