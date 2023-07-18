@@ -204,8 +204,9 @@ const changePopState = (params) => {
     let findIndex = findSeason(params[0])
     params[1].playerInfo = allSeason.value[findIndex]
     params[1].playerName = findPlayer(params[1].spId, true)
-    params[1].position = allPosition.value[params[1].position]
     playerInfo.value = params[1]
+    console.log('open modal - resultData', resultData)
+    console.log('open modal - totalData', resultData)
   } else {
     bodyStyle.value = 'overflow:auto;!important'
   }
@@ -223,6 +224,8 @@ const findDivision = (division) => {
 
 //Accordion 확장
 const toggleCollapse = (propName) => {
+  console.log('resultData', resultData)
+  console.log('totalData', totalData)
   visible[propName] = !visible[propName]
 }
 
