@@ -375,6 +375,15 @@ a {
     transform: translateZ(0);
   }
 }
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
 .player-modal,
 .overlay {
   width: 100%;
@@ -389,23 +398,40 @@ a {
   background-color: black;
 }
 .modal-card {
-  max-width: 40%;
-  min-width: 40%;
+  max-width: 55%;
+  min-width: 55%;
   margin: auto;
   padding: 20px;
-  background-color: white;
+  background-color: rgb(253, 254, 255);
   position: fixed;
-  min-height: 400px;
-  max-height: 500px;
-  left: 30%;
-  top: 15%;
+  min-height: 550px;
+  max-height: 550px;
+  left: 23%;
+  top: 32%;
   z-index: 9999;
-  opacity: 1;
   border-radius: 10px;
   overflow: auto;
   box-shadow: 5px 10px 10px 1px rgba(0, 0, 0, 0.3);
+}
+.fade-in {
   animation: fadeInUp 0.6s;
 }
+
+.fade-out {
+  transition: opacity 0.5s ease;
+  opacity: 0;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.5s ease;
+}
+
+.fade-enter,
+.fade-leave-to {
+  opacity: 0;
+}
+
 .modal-body {
   position: relative;
   padding: var(--bs-modal-padding);
@@ -432,14 +458,14 @@ a {
 
 .seasonPlayerImg {
   position: relative;
-  top: 25%;
+  top: 26%;
   border-radius: 50%;
-  left: 8%;
+  left: 7%;
 }
 .seasonLogoImg {
+  right: 39%;
   position: relative;
   top: 46%;
-  left: -57%;
   border-radius: 50%;
   max-width: 40px;
 }
@@ -450,7 +476,7 @@ a {
   display: flex;
   justify-content: center;
   position: relative;
-  top: 39%;
+  top: 40%;
   padding: 3px;
 }
 .playerCardInfo {
@@ -514,20 +540,29 @@ a {
 }
 
 .playerStats {
-  padding: 30px 0px;
   text-align: left;
-  display: flex;
+  width: 70%;
 }
 .playersStatSpan {
-  font-size: 15px;
-  font-weight: 800;
+  font-size: 16px;
+  font-weight: bold;
   padding: 1px;
+  color: #2e2e2ebe;
 }
 .statsRows {
-  display: grid;
   padding: 0px 10px;
 }
 .playerStatsTitle {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: bold;
+}
+.statsRows > dd {
+  text-indent: 15px;
+  display: inline-block;
+}
+.playerStatText {
+  padding-left: 5px;
+  font-size: 20px;
+  color: rgb(255, 64, 64);
+  font-weight: 700;
 }

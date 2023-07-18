@@ -89,7 +89,9 @@
           </b-collapse>
         </b-card>
       </div>
-      <PlayerStatusModal v-if="popState" @close="changePopState" :playerInfo="playerInfo" />
+      <transition name="fade">
+        <PlayerStatusModal v-if="popState" @close="changePopState" :playerInfo="playerInfo" :popState="popState" />
+      </transition>
       <div class="moreBtnArea" @click="moreButton">더보기+</div>
     </div>
   </div>
