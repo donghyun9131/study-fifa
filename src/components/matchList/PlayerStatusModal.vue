@@ -84,7 +84,10 @@
               </dd>
               <hr />
               <dt class="playerStatsTitle">공통 지표</dt>
-              <dd><span class="playersStatSpan">패스 성공률</span><span class="playerStatText">91%</span></dd>
+              <dd>
+                <span class="playersStatSpan">패스 성공률</span
+                ><span class="playerStatText">{{ (props.playerInfo.status.passSuccess / props.playerInfo.status.passTry).toFixed(1) * 100 }}%</span>
+              </dd>
               <dd>
                 <span class="playersStatSpan">패스 시도</span><span class="playerStatText">{{ props.playerInfo.status.passTry }}</span>
               </dd>
