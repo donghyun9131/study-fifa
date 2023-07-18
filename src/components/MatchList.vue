@@ -204,7 +204,6 @@ const changePopState = (params) => {
     params[1].playerName = findPlayer(params[1].spId, true)
     params[1].position = allPosition.value[params[1].position]
     playerInfo.value = params[1]
-    console.log(params[1])
   } else {
     bodyStyle.value = 'overflow:auto;!important'
   }
@@ -307,41 +306,44 @@ const findUserApiCallback = async (apiResult) => {
             console.log('실패')
           }
         })
+      let matchIds = res.data
+      let results = []
+      axios
+        .all([
+          axios.get(`https://api.nexon.co.kr/fifaonline4/v1.0/matches/${matchIds[0]}`, { headers: headers }),
+          axios.get(`https://api.nexon.co.kr/fifaonline4/v1.0/matches/${matchIds[1]}`, { headers: headers }),
+          axios.get(`https://api.nexon.co.kr/fifaonline4/v1.0/matches/${matchIds[2]}`, { headers: headers }),
+        ])
+        .then(
+          axios.spread((res1, res2, res3) => {
+            results.push(res1.data)
+            results.push(res2.data)
+            results.push(res3.data)
 
-      for (const [index, element] of res.data.entries()) {
-        //아코디언 visible 처리
-        let visibleObjKey = 'accordion-' + (totalData.response.length + 1)
-        visible[visibleObjKey] = false
+            results.forEach((element, index) => {
+              //아코디언 visible 처리
+              let visibleObjKey = 'accordion-' + (totalData.response.length + 1)
+              visible[visibleObjKey] = false
 
-        const urls2 = `https://api.nexon.co.kr/fifaonline4/v1.0/matches/${element}` // 매치 상세조회 url
-        await axios
-          .get(urls2, {
-            headers: headers,
-          })
-          .then((detail) => {
-            totalData.response.push(detail.data) //매치상세 추가
-            findUserWinning(detail) //승률셋팅
-            groundOnplayer(detail.data, index) //선수셋팅
-          })
-          .catch((error) => {
-            if (error.response.status === 404) {
-              console.log(error)
-              console.log(index)
-            }
-          })
-      }
-      resultData.response = totalData.response
-      resultData.userDivisionInfo = totalData.userDivisionInfo
-      resultData.findUserInfo = totalData.findUserInfo
-      resultData.userNotFound = totalData.userNotFound
-      resultData.nickname = totalData.nickname
+              totalData.response.push(element) //매치상세 추가
+              findUserWinning(element) //승률셋팅
+              groundOnplayer(element, index) //선수셋팅
+            })
+            resultData.response = totalData.response
+            resultData.userDivisionInfo = totalData.userDivisionInfo
+            resultData.findUserInfo = totalData.findUserInfo
+            resultData.userNotFound = totalData.userNotFound
+            resultData.nickname = totalData.nickname
+
+            loading.value = false
+          }),
+        )
     })
     .catch((error) => {
       if (error.response.status === 404) {
         console.log(error)
       }
     })
-  loading.value = false
 }
 
 const moreButton = async () => {
@@ -354,31 +356,35 @@ const moreButton = async () => {
       headers: headers,
     })
     .then(async (res) => {
-      for (const [index, element] of res.data.entries()) {
-        //아코디언 visible 처리
-        let visibleObjKey = 'accordion-' + (totalData.response.length + 1)
-        visible[visibleObjKey] = false
+      let matchIds = res.data
+      let results = []
+      axios
+        .all([
+          axios.get(`https://api.nexon.co.kr/fifaonline4/v1.0/matches/${matchIds[0]}`, { headers: headers }),
+          axios.get(`https://api.nexon.co.kr/fifaonline4/v1.0/matches/${matchIds[1]}`, { headers: headers }),
+          axios.get(`https://api.nexon.co.kr/fifaonline4/v1.0/matches/${matchIds[2]}`, { headers: headers }),
+        ])
+        .then(
+          axios.spread((res1, res2, res3) => {
+            results.push(res1.data)
+            results.push(res2.data)
+            results.push(res3.data)
 
-        const urls2 = `https://api.nexon.co.kr/fifaonline4/v1.0/matches/${element}` // 매치 상세조회 url
-        await axios
-          .get(urls2, {
-            headers: headers,
-          })
-          .then((detail) => {
-            totalData.response.push(detail.data) //매치상세추가
-            findUserWinning(detail) //승률셋팅
-            groundOnplayer(detail.data, totalData.response.length - 1) //선수셋팅
-          })
-          .catch((error) => {
-            if (error.response.status === 404) {
-              console.log(error)
-              console.log(index)
-            }
-          })
-      }
-      resultData.response = []
-      resultData.response.push(...totalData.response)
-      loading.value = false
+            results.forEach((element) => {
+              //아코디언 visible 처리
+              let visibleObjKey = 'accordion-' + (totalData.response.length + 1)
+              visible[visibleObjKey] = false
+
+              totalData.response.push(element) //매치상세 추가
+              findUserWinning(element) //승률셋팅
+              groundOnplayer(element, totalData.response.length - 1) //선수셋팅
+            })
+
+            resultData.response = []
+            resultData.response.push(...totalData.response)
+            loading.value = false
+          }),
+        )
     })
     .catch((error) => {
       if (error.response.status === 404) {
@@ -515,19 +521,19 @@ const findUserWinning = (detail) => {
   let avgGoal = 0
 
   for (let i = 0; i < 2; i++) {
-    if (detail.data.matchInfo[i].accessId === totalData.findUserInfo.accessId) {
-      if (detail.data.matchInfo[i].matchDetail.matchResult === '승') {
-        detail.data.gameResult = 'win'
-        detail.data.matchInfo[i].matchDetail.matchResult === '승' ? (winCount += 1) : winCount
-      } else if (detail.data.matchInfo[i].matchDetail.matchResult === '무') {
-        detail.data.gameResult = 'draw'
+    if (detail.matchInfo[i].accessId === totalData.findUserInfo.accessId) {
+      if (detail.matchInfo[i].matchDetail.matchResult === '승') {
+        detail.gameResult = 'win'
+        detail.matchInfo[i].matchDetail.matchResult === '승' ? (winCount += 1) : winCount
+      } else if (detail.matchInfo[i].matchDetail.matchResult === '무') {
+        detail.gameResult = 'draw'
       } else {
-        detail.data.gameResult = 'lose'
+        detail.gameResult = 'lose'
       }
-      winPossession += detail.data.matchInfo[i].matchDetail.possession
-      avgGoal += detail.data.matchInfo[i].shoot.goalTotal
+      winPossession += detail.matchInfo[i].matchDetail.possession
+      avgGoal += detail.matchInfo[i].shoot.goalTotal
     } else {
-      const bestDivisionUrls2 = `https://api.nexon.co.kr/fifaonline4/v1.0/users/${detail.data.matchInfo[i].accessId}/maxdivision`
+      const bestDivisionUrls2 = `https://api.nexon.co.kr/fifaonline4/v1.0/users/${detail.matchInfo[i].accessId}/maxdivision`
       axios
         .get(bestDivisionUrls2, {
           headers: headers,
