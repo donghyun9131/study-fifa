@@ -11,17 +11,23 @@
       <div>
         <b-row class="justify-content-md-center p-5">
           <b-col cols="12" md="auto">
-            <b-input-group size="lg" class="mb-1">
+            <b-input-group size="md">
               <b-form-input v-model="totalData.nickname" placeholder="구단주명" @keyup.enter="submitButton"></b-form-input>
               <b-input-group-append>
-                <b-button size="lg" text="Button" variant="primary" @click="submitButton">검색</b-button>
+                <b-button text="Button" variant="primary" @click="submitButton">검색</b-button>
               </b-input-group-append>
             </b-input-group>
           </b-col>
         </b-row>
       </div>
     </div>
-    <loading-overlay :active="loading"></loading-overlay>
+    <transition name="fade">
+      <loading-overlay :active="loading" :opacity="0.5">
+        <div class="loadingImg">
+          <p class="loadingText">경기 결과를 불러오는 중입니다...</p>
+        </div>
+      </loading-overlay>
+    </transition>
     <div v-if="resultData.response.length === 0"></div>
     <div v-else>
       <!-- userprofile component -->
@@ -371,6 +377,7 @@ const findUserApiCallback = async (apiResult) => {
 const moreButton = async () => {
   //찾은 유저의 경기 기록 조회 url
   loading.value = true
+  document.body.style.overflow = 'auto'
   const urls = `https://api.nexon.co.kr/fifaonline4/v1.0/users/${resultData.findUserInfo.accessId}/matches?matchtype=50&offset=${resultData.response.length}&limit=3`
 
   await axios
