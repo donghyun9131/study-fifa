@@ -142,12 +142,6 @@ onMounted(async () => {
     allPosition.value[i] = positionArray[i]
   }
 
-  const headers = {
-    'Content-Type': 'application/json',
-    Authorization:
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJYLUFwcC1SYXRlLUxpbWl0IjoiNTAwOjEwIiwiYWNjb3VudF9pZCI6IjM4Njg2NzczNyIsImF1dGhfaWQiOiIyIiwiZXhwIjoxNzAzNTY4NTg1LCJpYXQiOjE2ODgwMTY1ODUsIm5iZiI6MTY4ODAxNjU4NSwic2VydmljZV9pZCI6IjQzMDAxMTQ4MSIsInRva2VuX3R5cGUiOiJBY2Nlc3NUb2tlbiJ9.07txWeL2lyLvtYvTcCVpGTRQpD5GZ7I9lQH6nnsXD1g',
-  }
-
   const urls = 'https://static.api.nexon.co.kr/fifaonline4/latest/spid.json'
   const divisionUrls = 'https://static.api.nexon.co.kr/fifaonline4/latest/division.json'
   const seasionUrls = 'https://static.api.nexon.co.kr/fifaonline4/latest/seasonid.json'
